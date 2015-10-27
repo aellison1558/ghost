@@ -8,6 +8,7 @@ class Game
     @dictionary = File.readlines("dictionary.txt")
     @dictionary = @dictionary.map {|word| word.chomp}
     @current_player = 0
+    @start_player = 0
     @losses = {}
     @players.each do |player|
       @losses[player] = 0
@@ -21,6 +22,15 @@ class Game
     else
       @current_player = 0
     end
+  end
+
+  def switch_starter!
+    if @start_player < @players.length - 1
+      @start_player += 1
+    else
+      @start_player = 0
+    end
+    @current_player = @start_player
   end
 
   def valid_play?(string)
@@ -46,6 +56,11 @@ class Game
     @losses[@players[(@current_player - 1)]] += 1
     string = record(@players[(@current_player - 1)])
     puts "#{@players[(@current_player - 1)].name} has #{string}"
+    lost
+    switch_starter!
+  end
+
+  def lost
     if lost?(@players[(@current_player - 1)])
       puts "#{@players[(@current_player - 1)].name} has lost!"
       @players.delete(@players[(@current_player - 1)])
