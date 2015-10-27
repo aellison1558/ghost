@@ -2,27 +2,24 @@ require_relative 'human_player'
 class Game
   GHOST = "GHOST"
   attr_accessor :fragment, :player1
-  def initialize(player1, player2, dictionary)
-    @player1 = player1
-    @player2 = player2
+  def initialize(players)
+    @players = players
     @fragment = ""
     @dictionary = File.readlines("dictionary.txt")
     @dictionary = @dictionary.map {|word| word.chomp}
-    @current_player = @player1
-    @previous_player = @player2
-    @losses = {
-      @player1 => 0,
-      @player2 => 0
-    }
+    @current_player = 0
+    @losses = {}
+    @players.each do |player|
+      @losses[player] = 0
+    end
+
   end
 
   def next_player!
-    if @current_player == @player1
-      @current_player = @player2
-      @previous_player = @player1
-    elsif @current_player == @player2
-      @current_player = @player1
-      @previous_player = @player2
+    if @current_player < @players.length - 1
+      @current_player += 1
+    else
+      @current_player = 0
     end
   end
 
@@ -43,20 +40,31 @@ class Game
 
   def play_round
     while !won?
-      take_turn(@current_player)
+      take_turn(@players[@current_player])
       next_player!
     end
-    @losses[@previous_player] += 1
-    string = record(@previous_player)
-    puts "#{@previous_player.name} has #{string}"
+    @losses[@players[(@current_player - 1)]] += 1
+    string = record(@players[(@current_player - 1)])
+    puts "#{@players[(@current_player - 1)].name} has #{string}"
+    if lost?(@players[(@current_player - 1)])
+      puts "#{@players[(@current_player - 1)].name} has lost!"
+      @players.delete(@players[(@current_player - 1)])
+      if @current_player > @players.length
+        next_player!(@current_player)
+      end
+    end
   end
 
   def won?
     @dictionary.include?(@fragment)
   end
 
+  def lost?(player)
+    record(player) == GHOST
+  end
+
   def game_over?
-    record(@player1) == GHOST || record(@player2) == GHOST
+    @players.length == 1
   end
 
   def play
@@ -64,6 +72,7 @@ class Game
       play_round
       @fragment = ""
     end
+    puts "#{@players[0].name} won!"
   end
 
   def record(player)
@@ -80,5 +89,8 @@ dictionary = File.readlines("dictionary.txt")
 dictionary = dictionary.map {|word| word.chomp}
 player1 = HumanPlayer.new("Player 1")
 player2 = HumanPlayer.new("Player 2")
-game = Game.new(player1, player2, dictionary)
+player3 = HumanPlayer.new("Player 3")
+player4 = HumanPlayer.new("Player 4")
+players = [player1, player2, player3, player4]
+game = Game.new(players)
 game.play
