@@ -2,27 +2,25 @@ require_relative 'human_player'
 class Game
   GHOST = "GHOST"
   attr_accessor :fragment, :player1
-  def initialize(player1, player2, dictionary)
-    @player1 = player1
-    @player2 = player2
+  def initialize(players, dictionary)
+    @players = players
     @fragment = ""
     @dictionary = File.readlines("dictionary.txt")
     @dictionary = @dictionary.map {|word| word.chomp}
-    @current_player = @player1
-    @previous_player = @player2
-    @losses = {
-      @player1 => 0,
-      @player2 => 0
-    }
+    @current_player = 0
+    @previous_player = -1
+    @losses = {}
+    @players.each do |player|
+      @losses[player] = 0
+    end
+
   end
 
-  def next_player!
-    if @current_player == @player1
-      @current_player = @player2
-      @previous_player = @player1
-    elsif @current_player == @player2
-      @current_player = @player1
-      @previous_player = @player2
+  def next_player!(current_or_previous)
+    if current_or_previous < @players.length
+      current_or_previous += 1
+    else
+      current_or_previous = 0
     end
   end
 
@@ -43,12 +41,13 @@ class Game
 
   def play_round
     while !won?
-      take_turn(@current_player)
-      next_player!
+      take_turn(@players[@current_player])
+      next_player!(@current_player)
+      next_player!(@previous_player)
     end
-    @losses[@previous_player] += 1
-    string = record(@previous_player)
-    puts "#{@previous_player.name} has #{string}"
+    @losses[@players[@previous_player]] += 1
+    string = record(@players[@previous_player])
+    puts "#{@players[@previous_player].name} has #{string}"
   end
 
   def won?
@@ -56,7 +55,7 @@ class Game
   end
 
   def game_over?
-    record(@player1) == GHOST || record(@player2) == GHOST
+    @players.length == 1
   end
 
   def play
