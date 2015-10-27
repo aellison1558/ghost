@@ -4,7 +4,8 @@ class HumanPlayer
     @name = name
   end
 
-  def guess
+  def guess(fragment)
+    puts "The Fragment is #{fragment}"
     puts "Take a guess"
     answer = gets.chomp
     answer
