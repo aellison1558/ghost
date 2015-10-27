@@ -2,13 +2,12 @@ require_relative 'human_player'
 class Game
   GHOST = "GHOST"
   attr_accessor :fragment, :player1
-  def initialize(players, dictionary)
+  def initialize(players)
     @players = players
     @fragment = ""
     @dictionary = File.readlines("dictionary.txt")
     @dictionary = @dictionary.map {|word| word.chomp}
     @current_player = 0
-    @previous_player = -1
     @losses = {}
     @players.each do |player|
       @losses[player] = 0
@@ -16,11 +15,11 @@ class Game
 
   end
 
-  def next_player!(current_or_previous)
-    if current_or_previous < @players.length
-      current_or_previous += 1
+  def next_player!
+    if @current_player < @players.length - 1
+      @current_player += 1
     else
-      current_or_previous = 0
+      @current_player = 0
     end
   end
 
@@ -42,16 +41,26 @@ class Game
   def play_round
     while !won?
       take_turn(@players[@current_player])
-      next_player!(@current_player)
-      next_player!(@previous_player)
+      next_player!
     end
-    @losses[@players[@previous_player]] += 1
-    string = record(@players[@previous_player])
-    puts "#{@players[@previous_player].name} has #{string}"
+    @losses[@players[(@current_player - 1)]] += 1
+    string = record(@players[(@current_player - 1)])
+    puts "#{@players[(@current_player - 1)].name} has #{string}"
+    if lost?(@players[(@current_player - 1)])
+      puts "#{@players[(@current_player - 1)].name} has lost!"
+      @players.delete(@players[(@current_player - 1)])
+      if @current_player > @players.length
+        next_player!(@current_player)
+      end
+    end
   end
 
   def won?
     @dictionary.include?(@fragment)
+  end
+
+  def lost?(player)
+    record(player) == GHOST
   end
 
   def game_over?
@@ -63,6 +72,7 @@ class Game
       play_round
       @fragment = ""
     end
+    puts "#{@players[0].name} won!"
   end
 
   def record(player)
@@ -79,5 +89,8 @@ dictionary = File.readlines("dictionary.txt")
 dictionary = dictionary.map {|word| word.chomp}
 player1 = HumanPlayer.new("Player 1")
 player2 = HumanPlayer.new("Player 2")
-game = Game.new(player1, player2, dictionary)
+player3 = HumanPlayer.new("Player 3")
+player4 = HumanPlayer.new("Player 4")
+players = [player1, player2, player3, player4]
+game = Game.new(players)
 game.play
